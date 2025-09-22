@@ -6,7 +6,7 @@ A terminal that renders text! Very cool!
 
 ### 1. Features
 
-1. It prints stuff you want
+1. It prints stuff you want.
 2. It recieves stuff from keyboard.
 3. It responses to keystroke!
 4. It looks nice.
@@ -34,7 +34,7 @@ on("keyboard", (data: Buffer<ArrayBufferLike>) => void);
 
 #### String input (command submission)
 ```ts
-// Fires when recieved the enter, gives what ever is in the buffer in string.
+// Fires when recieved the [Enter]/[Return] key, gives whatever is in the buffer as string.
 on("input", (data: string => void);
 ```
 
@@ -106,12 +106,14 @@ terminal.event.addListener("keyboard", (data) => {
 ```
 
 
-### 6. Contribution
+### 6. Contributions
+I don't know what the hell I am doing! 
 
-Please send help! I don't know what the hell I am doing! Thank you in advance!
+***Please send help!***
 
+Thank you in advance!
 
 
 ---
-Thanks!
+Thank you for spending your precious time checking this package out!
 
