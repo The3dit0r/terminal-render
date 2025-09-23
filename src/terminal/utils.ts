@@ -32,6 +32,8 @@ export class TerminalSettings {
 interface I_TerminalEvent {
   input(inputBufferStr: string): void;
   keyboard(data: Buffer<ArrayBufferLike>): void;
+  wasd(data : [boolean, boolean, boolean, boolean]) : void;
+  arrows(data : [boolean, boolean, boolean, boolean]) : void;
 }
 
 export class TerminalEventEmitter extends EventEmitter {

@@ -97,6 +97,27 @@ export class Terminal implements I_Terminal {
     const char = d.toString();
 
     this.event.emit("keyboard", d);
+    let index = "wasd".indexOf(char)
+
+    if(index >= 0){
+      const res : boolean[] = new Array(4).fill(false)
+      res[index] = true
+      this.event.emit("wasd", res as any)
+    }
+
+    index = [
+      '1b5b41',
+      '1b5b44',
+      '1b5b42',
+      '1b5b43'
+    ].indexOf(d.toString("hex"))
+
+    if(index >= 0){
+      const res : boolean[] = new Array(4).fill(false)
+      res[index] = true
+      this.event.emit("arrows", res as any)
+    }
+
     this.addToInputBuffer(char);
   }
 
@@ -183,5 +204,21 @@ export class Terminal implements I_Terminal {
   log(...arg: string[]): void {
     const stamp = format(new Date(), "[kk:mm:ss]");
     this.addToOutputBuffer(chalk.cyan(stamp), ...arg);
+  }
+
+  private storedModules = new Map<string, ((t : I_Terminal) => any)>()
+
+  registerModule(k : string, m : (t : I_Terminal) => any){
+    this.storedModules.set(k, m)
+    this.log(`Loaded module ${k}`)
+  }
+
+  branchToModule(k : string){
+    const f = this.storedModules.get(k)
+    if(typeof f !== "function") {
+      this.log(`No module named ${k} registered`);
+      return;
+    }
+    f(this)
   }
 }
