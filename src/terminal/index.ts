@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import {
   realLen,
   TerminalEventEmitter,
+  TerminalModule,
   TerminalSettings,
   type I_Terminal,
 } from "./utils";
@@ -93,30 +94,28 @@ export class Terminal implements I_Terminal {
     this.drawInput();
   }
 
-  private handleInput(d: Buffer<ArrayBufferLike>) {
+  private fireArrowEvent(key : "arrows" | "wasd", index : number){
+    if(index >= 0 && index < 4){
+      this.event.emit(key, index as 0 | 1 | 2 | 3)
+    }
+  }
+
+  private handleInput(d: Buffer) {
     const char = d.toString();
+    const hex = d.toString("hex")
 
     this.event.emit("keyboard", d);
-    let index = "wasd".indexOf(char)
 
-    if(index >= 0){
-      const res : boolean[] = new Array(4).fill(false)
-      res[index] = true
-      this.event.emit("wasd", res as any)
-    }
+    this.fireArrowEvent("wasd", "wasd".indexOf(char))
+    
+    this.fireArrowEvent("arrows", [
+      '1b5b41', //up
+      '1b5b44', //left
+      '1b5b42', //down
+      '1b5b43'  //right
+    ].indexOf(hex))
 
-    index = [
-      '1b5b41',
-      '1b5b44',
-      '1b5b42',
-      '1b5b43'
-    ].indexOf(d.toString("hex"))
-
-    if(index >= 0){
-      const res : boolean[] = new Array(4).fill(false)
-      res[index] = true
-      this.event.emit("arrows", res as any)
-    }
+    if(hex === "0d") this.event.emit("enter")
 
     this.addToInputBuffer(char);
   }
@@ -206,19 +205,75 @@ export class Terminal implements I_Terminal {
     this.addToOutputBuffer(chalk.cyan(stamp), ...arg);
   }
 
-  private storedModules = new Map<string, ((t : I_Terminal) => any)>()
+  addCommonCommands(){
+    this.event.on("input", (data) => {
+      data = data.trim()
+      const [cmd, ...args] = data.split(" ");
 
-  registerModule(k : string, m : (t : I_Terminal) => any){
+      switch (cmd) {
+        case "q":
+        case "quit": {
+          process.exit(0);
+        }
+
+        case "cls":
+        case "clear": {
+          this.clear();
+          break;
+        }
+
+        case "b":
+        case "back": {
+          if(this.isInModule()) {
+            this.stopModule();
+            const target = this.history.at(-1)
+            if(target){
+              return this.branchToModule(target)
+            }
+          } else process.exit(0);
+        }
+
+        case "echo": {
+          const text = args.join(" ");
+          this.log(text);
+
+          break;
+        }
+      }
+    })
+  }
+
+  private storedModules = new Map<string, TerminalModule>()
+  private history : string[] = []
+  private currModuleKey : string = ""
+  private get currModule() : TerminalModule | undefined {return this.storedModules.get(this.currModuleKey)}
+
+
+  isInModule(){return this.currModule !== undefined}
+
+  registerModule(k : string, m : TerminalModule){
+    m.bind(this)
     this.storedModules.set(k, m)
     this.log(`Loaded module ${k}`)
   }
 
+  stopModule(){
+    if(this.currModule){
+      this.currModule.stop()
+      this.currModuleKey = ""
+    }
+  }
+
   branchToModule(k : string){
     const f = this.storedModules.get(k)
-    if(typeof f !== "function") {
-      this.log(`No module named ${k} registered`);
+    if(f instanceof TerminalModule) {
+      this.log("Loaded module " + k)
+      this.history.push(this.currModuleKey)
+      this.stopModule()
+      this.currModuleKey = k
+      f.start()
       return;
     }
-    f(this)
+    this.log(`No module named ${k} registered`);
   }
 }

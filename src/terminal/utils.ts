@@ -1,3 +1,4 @@
+import type { ChalkInstance } from "chalk";
 import { EventEmitter } from "node:events";
 
 import stringWidth from "string-width";
@@ -12,7 +13,10 @@ export function convertEscapeToLiteral(str: string) {
 export const realLen = (s: string) => stringWidth(s);
 
 export interface I_Terminal {
+  clear() : void;
   log(...arg: string[]): void;
+  branchToModule?(moduleName : string) : void;
+  event : TerminalEventEmitter;
 }
 
 type T_SettingsOptions = {
@@ -32,8 +36,9 @@ export class TerminalSettings {
 interface I_TerminalEvent {
   input(inputBufferStr: string): void;
   keyboard(data: Buffer<ArrayBufferLike>): void;
-  wasd(data : [boolean, boolean, boolean, boolean]) : void;
-  arrows(data : [boolean, boolean, boolean, boolean]) : void;
+  wasd(data : 0 | 1 | 2 | 3) : void;
+  arrows(data : 0 | 1 | 2 | 3) : void;
+  enter() : void;
 }
 
 export class TerminalEventEmitter extends EventEmitter {
@@ -78,4 +83,27 @@ export class TerminalEventEmitter extends EventEmitter {
   ): this {
     return super.addListener(event, listener);
   }
+}
+
+export class TerminalModule {
+  protected terminalPtr? : I_Terminal
+  private listened : [keyof I_TerminalEvent, I_TerminalEvent[keyof I_TerminalEvent]][] = []
+
+  listen<K extends keyof I_TerminalEvent>(event : K, listener : I_TerminalEvent[K]){
+    if(!this.terminalPtr) return;
+    this.listened.push( [event, listener] )
+    this.terminalPtr.event.on(event, listener)
+  }
+  bind(terminal : I_Terminal){
+    this.terminalPtr = terminal
+  }
+  start(){} 
+  stop(){
+    if(!this.terminalPtr) return
+    this.listened.forEach(([k, f]) => this.terminalPtr!.event.off(k, f))
+  }
+}
+
+export type ChalkFormatKeys = keyof {
+  [k in keyof ChalkInstance as ChalkInstance[k] extends (s : string) => string ? k : never] : ChalkInstance[k]
 }
