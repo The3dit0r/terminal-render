@@ -1,6 +1,8 @@
 import { Terminal } from "./terminal";
 
-import { add } from "./utils/math";
+import {default as TerminalModule} from "./terminalModule"
+
+import { add, rng } from "./utils/math";
 import { delay } from "./utils/timing";
 
-export { Terminal, add, delay };
+export { Terminal, TerminalModule, add, rng, delay };
