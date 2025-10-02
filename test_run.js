@@ -9,7 +9,7 @@ async function main(){
   k[3] = "debug"
   k[4] = "exit"
 
-  terminal.registeerModule("Test_menu", new TerminalModule.menu([
+  terminal.registerModule("Test_menu", new TerminalModule.menu([
     "choice 1",
     "choice 2",
     "choice 3",
@@ -21,7 +21,7 @@ async function main(){
   terminal.registerModule("exit", new TerminalModule.exit())
   await delay(500)
 
-  terminal.branchToModule("Test_mnu");
+  terminal.branchToModule("Test_menu");
 }
 main()
 
